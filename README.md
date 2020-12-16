@@ -1,6 +1,6 @@
 # Medical_Dicom_3D
 This project takes MRI or CT scan raw *.dicom files as an input then it transform it to a visible picture in Hounsfield scale.
-Next it builds a 3d model based on the slices data.
+Next it builds a 3d model based on the slices data. It is updated as per python 3 
 
 # Further Updates List:
 1-STL Exporting : A 3d printable model export feature will be added to enable the users
