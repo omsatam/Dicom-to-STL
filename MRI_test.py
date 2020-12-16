@@ -14,38 +14,30 @@ from skimage.morphology import square
 from sklearn.cluster import KMeans
 from plotly.graph_objs import *
 # init_notebook_mode(connected=True)
-print "importing is finished successfully"
+print("importing is finished successfully")
 
 # Taking the data path
-data_path = "/home/ah/Python/Open_CV/Dicomp_MRI/input/Dicom/Jaw/"
-output_path = working_path = "/home/ah/Python/Open_CV/Dicomp_MRI/Output/"
+data_path = "F:\\Final year project\\project\\Medical_Dicom_3D\\Input\\Mandible"
+output_path = working_path = "F:\\Final year project\\project\\Medical_Dicom_3D\\Output1\\"
 g = glob(data_path + '/*.dcm')
 
-# Print out the first 5 file names to verify we're in the right folder.
+# Print out the first 5 file names to verify we're in the right folder
 print ("Total of %d DICOM images.\nFirst 5 filenames:" % len(g))
-print '\n'.join(g[:5])
-
-# Loop over the image files and store everything into a list.
-
-
+#print('\n'.join(g[:5])
+print("Loading Data")
+id = 0
 def load_scan(path):
     slices = [pydicom.read_file(path + '/' + s) for s in os.listdir(path)]
     slices.sort(key=lambda x: int(x.InstanceNumber))
     try:
-        slice_thickness = np.abs(
-            slices[0].ImagePositionPatient[2] - slices[1].ImagePositionPatient[2])
+        slice_thickness = np.abs(slices[0].ImagePositionPatient[2] - slices[1].ImagePositionPatient[2])
     except:
-        slice_thickness = np.abs(
-            slices[0].SliceLocation - slices[1].SliceLocation)
+        slice_thickness = np.abs(slices[0].SliceLocation - slices[1].SliceLocation)
 
     for s in slices:
         s.SliceThickness = slice_thickness
 
     return slices
-
-# Hounsfield scaling
-
-
 def get_pixels_hu(scans):
     # print type(scans[0].pixel_array)
     image = np.stack([s.pixel_array for s in scans])
@@ -68,37 +60,32 @@ def get_pixels_hu(scans):
     image += np.int16(intercept)
 
     return np.array(image, dtype=np.int16)
-
-
-print "Loading Data"
-id = 0
 patient = load_scan(data_path)
-print "Finshed Loading Data successfully"
-print "Hounsfield scaling"
-imgs = get_pixels_hu(patient)
-print "Finshed Hounsfield scaling successfully"
 
+print("Finshed Loading Data successfully")
+print("Hounsfield scaling")
+imgs = get_pixels_hu(patient)
+print("Finshed Hounsfield scaling successfully")
 # saving the images
-print "Saving The Images"
+print("Saving The Images")
 np.save(output_path + "fullimages_%d.npy" % (id), imgs)
 temp_str = str(output_path + "fullimages_%d.npy" % (id))
-print "Successfully Saved The Images to" + temp_str
+print("Successfully Saved The Images to" + temp_str)
 
 # Historgram visualization
-print "Beginning Historgram Visualization"
+print("Beginning Historgram Visualization")
 file_used = output_path + "fullimages_%d.npy" % id
 imgs_to_process = np.load(file_used).astype(np.float64)
 plt.hist(imgs_to_process.flatten(), bins=50, color='c')
 plt.xlabel("Hounsfield Units (HU)")
 plt.ylabel("Frequency")
 plt.show()
-print "Finshed  Historgram Visualization"
+print("Finshed  Historgram Visualization")
 
 # Displaying an Image Stack
-print "Displaying an Image Stack"
+print("Displaying an Image Stack")
 id = 0
 imgs_to_process = np.load(output_path + 'fullimages_{}.npy'.format(id))
-
 
 def sample_stack(stack, rows=6, cols=6, start_with=10, show_every=3):
     fig, ax = plt.subplots(rows, cols, figsize=[12, 12])
@@ -114,8 +101,8 @@ sample_stack(imgs_to_process, rows=3, cols=3, start_with=1, show_every=1)
 
 
 # Resampling
-print "Slice Thickness: %f" % patient[0].SliceThickness
-print "Pixel Spacing (row, col): (%f, %f) " % (patient[0].PixelSpacing[0], patient[0].PixelSpacing[1])
+print("Slice Thickness: %f" % patient[0].SliceThickness)
+print("Pixel Spacing (row, col): (%f, %f) " % (patient[0].PixelSpacing[0], patient[0].PixelSpacing[1]))
 
 id = 0
 imgs_to_process = np.load(output_path + 'fullimages_{}.npy'.format(id))
@@ -139,72 +126,44 @@ def resample(image, scan, new_spacing=[1, 1, 1]):
     return image, new_spacing
 
 
-print "Shape before resampling\t", imgs_to_process.shape
+print("Shape before resampling\t", imgs_to_process.shape)
 imgs_after_resamp, spacing = resample(imgs_to_process, patient, [1, 1, 1])
-print "Shape after resampling\t", imgs_after_resamp.shape
-
-
+print("Shape after resampling\t", imgs_after_resamp.shape)
 # 3D plotting
 def make_mesh(image, threshold=-300, step_size=1):
 
-    print "Transposing surface"
+    print("Transposing surface")
     p = image.transpose(2, 1, 0)
 
-    print "Calculating surface"
+    print("Calculating surface")
     # verts, faces, norm, val = measure.marching_cubes(p, threshold, step_size=step_size, allow_degenerate=True)
-    verts, faces = measure.marching_cubes(p, threshold)
+    verts, faces, norm, val = measure.marching_cubes_lewiner(p, threshold)
     return verts, faces
 
-
 v, f = make_mesh(imgs_after_resamp, 350, 2)
-
-
-def plotly_3d(verts, faces):
-    x, y, z = zip(*verts)
-
-    print "Drawing"
-
-    # Make the colormap single color since the axes are positional not intensity.
-    # colormap=['rgb(255,105,180)','rgb(255,255,51)','rgb(0,191,255)']
-    # colormap = ['rgb(236, 236, 212)', 'rgb(236, 236, 212)']
-
-    # fig = FF.create_trisurf(x=x,
-    #                     y=y,
-    #                     z=z,
-    #                     plot_edges=False,
-    #                     colormap=colormap,
-    #                     simplices=faces,
-    #                     backgroundcolor='rgb(64, 64, 64)',
-    #                     title="Interactive Visualization")
-    # iplot(fig)
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
-    ax.plot_trisurf(x, y, z, cmap=cm.jet)
-
-
-# plotly_3d(v, f)
-
 def plt_3d(verts, faces):
-    print "Drawing"
+    print("Drawing")
     x, y, z = zip(*verts)
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(111, projection='3d')
 
     # Fancy indexing: `verts[faces]` to generate a collection of triangles
     mesh = Poly3DCollection(verts[faces], linewidths=0.05, alpha=1)
-    face_color = [1, 1, 0]
+    face_color = [1, 1, 1]
     mesh.set_facecolor(face_color)
     ax.add_collection3d(mesh)
 
     ax.set_xlim(0, max(x))
     ax.set_ylim(0, max(y))
     ax.set_zlim(0, max(z))
-    ax.set_axis_bgcolor((0.7, 0.7, 0.7))
-    ax.set_facecolor((0.9, 0.8, 0.9))
+    ax.set_facecolor((0.7, 0.7, 0.7))
+    ax.set_facecolor((0.8, 0.8, 0.8))
     plt.show()
 
 
 plt_3d(v, f)
+
+
 
 # Standardize the pixel values
 
@@ -219,8 +178,7 @@ def make_lungmask(img, display=False):
     img = img / std
     # Find the average pixel value near the lungs
     # to renormalize washed out images
-    middle = img[int(col_size / 5):int(col_size / 5 * 4),
-                 int(row_size / 5):int(row_size / 5 * 4)]
+    middle = img[int(col_size / 5):int(col_size / 5 * 4),int(row_size / 5):int(row_size / 5 * 4)]
     mean = np.mean(middle)
     max = np.max(img)
     min = np.min(img)
@@ -231,8 +189,7 @@ def make_lungmask(img, display=False):
     #
     # Using Kmeans to separate foreground (soft tissue / bone) and background (lung/air)
     #
-    kmeans = KMeans(n_clusters=2).fit(
-        np.reshape(middle, [np.prod(middle.shape), 1]))
+    kmeans = KMeans(n_clusters=2).fit(np.reshape(middle, [np.prod(middle.shape), 1]))
     centers = sorted(kmeans.cluster_centers_.flatten())
     threshold = np.mean(centers)
     thresh_img = np.where(img < threshold, 1.0, 0.0)  # threshold the image
@@ -336,18 +293,18 @@ def make_lungmask(img, display=False):
     # return img*mask
 
 
-print imgs_after_resamp.shape  # (180, 302, 302)
+print(imgs_after_resamp.shape) # (180, 302, 302)
 img = imgs_after_resamp[30]
 make_lungmask(img, display=True)
 
 
 masked_lung = []
-print "Displaying Image Stack"
+print("Displaying Image Stack")
 for img in imgs_after_resamp:
     masked_lung.append(make_lungmask(img))
 
 sample_stack(masked_lung, show_every=1)
-print "Finshed Displaying Image Stack"
-print "Saving Masked Images"
+print("Finshed Displaying Image Stack")
+print("Saving Masked Images")
 np.save(output_path + "maskedimages_%d.npy" % (id), imgs)
-print "Finished Saving Masked Images"
+print("Finished Saving Masked Images")
