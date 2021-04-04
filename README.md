@@ -13,7 +13,7 @@ Meshmixer: It is used to remove defects which may arise in 3D printing of create
 Currently postprocessing is done through blender and adobe meshmixer. This also can be automated which will geberate a fully automated program in which user adds dicom files and will get final STL(free from any defects) file which is ready for 3D printng.
 
 The code for 3D visualizaton of dicom files is based on the following tutorial:
-https://www.raddq.com/dicom-processing-segmentation-visualization-in-python/
+ https://www.raddq.com/dicom-processing-segmentation-visualization-in-python/
 
 The code for converting Dicom files into STL file is based on following tutorial:
 https://bitbucket.org/somada141/pyscience/src/master/20140908_SurfaceExtraction/SurfaceExtraction.md
