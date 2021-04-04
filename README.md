@@ -1,4 +1,4 @@
-# Medical_Dicom_3D
+# Dicom-to-STL
 1-This project takes MRI or CT scan raw *.dicom files as an input then it transform it to a visible picture in Hounsfield scale.It is done via pydicom package. It creates a 3D image which is useful for better visualization of 3D dicom data. Next it builds a 3d model based on the slices data. Older version of this project is written in python 2.7 but Now It is updated as per python 3 
 
 2-STL Exporting : This STL exporting is done via VTK. In this project we have to specify the path of dicom files and then scripts will be run to create a STL file from CT data. The front and side views are also generated for instant visualisation. The STL file created is further viewed by any STL viewer.
