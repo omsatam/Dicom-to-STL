@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 import numpy as np
 # import dicom
 import pydicom
@@ -16,4 +16,4 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 from plotly.tools import FigureFactory as FF
 from plotly.graph_objs import *
 # init_notebook_mode(connected=True) 
-print "importing is finished"
+print("importing is finished")
